@@ -31,14 +31,15 @@ public class Main {
         }
       }
       case "cat-file" -> {
-        if (args.length < 2 && !"-p".equals(args[0])) {
+        if (args.length < 3 && !"-p".equals(args[1])) {
           return;
         }
-        String blobSha = args[1];
+        String blobSha = args[2];
         String filePath = String.format(".git/objects/%s/%s", blobSha.substring(0, 2), blobSha.substring(2));
+        LOG.debug("cat-file path={}", filePath);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new InflaterInputStream(new FileInputStream(filePath))))) {
           String line = reader.readLine();
-          System.out.println(line.substring(line.indexOf("\0" + 1)));
+          System.out.print(line.substring(line.indexOf("\0") + 1));
           while ((line = reader.readLine()) != null) {
             System.out.print(line);
           }
