@@ -1,4 +1,4 @@
-package org.howietkl;
+package org.howietkl.git;
 
 public class Utils {
 
