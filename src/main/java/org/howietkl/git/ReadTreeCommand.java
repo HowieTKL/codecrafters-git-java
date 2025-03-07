@@ -12,10 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.InflaterInputStream;
 
-public class LsTreeCommand implements Command {
-  private static final Logger LOG = LoggerFactory.getLogger(LsTreeCommand.class);
+public class ReadTreeCommand implements Command {
+  private static final Logger LOG = LoggerFactory.getLogger(ReadTreeCommand.class);
 
-  private static class TreeObjectEntry {
+  static class TreeObjectEntry {
     String mode;
     String name;
     byte[] sha;
@@ -31,10 +31,14 @@ public class LsTreeCommand implements Command {
       throw new IllegalArgumentException("Missing tree-sha");
     }
     String treeSha = isNameOnly ? args[2] : args[1];
-    lsTree(isNameOnly, treeSha);
+    readTree(isNameOnly, treeSha);
   }
 
-  private void lsTree(boolean isNameOnly, String treeSha) {
+  /**
+   * @param isNameOnly display only names
+   * @param treeSha SHA-1 of the tree (directory)
+   */
+  private void readTree(boolean isNameOnly, String treeSha) {
     LOG.info("lsTree isNameOnly={} treeSha={}", isNameOnly, treeSha);
     String filePath = Utils.getPath(treeSha);
     LOG.debug("lsTree file={}", filePath);

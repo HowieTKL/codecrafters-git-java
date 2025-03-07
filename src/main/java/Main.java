@@ -1,7 +1,8 @@
 import org.howietkl.git.CatFileCommand;
-import org.howietkl.git.HashObjectCommand;
+import org.howietkl.git.WriteObjectCommand;
 import org.howietkl.git.InitCommand;
-import org.howietkl.git.LsTreeCommand;
+import org.howietkl.git.ReadTreeCommand;
+import org.howietkl.git.WriteTreeCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,18 +13,11 @@ public class Main {
     final String command = args[0];
 
     switch (command) {
-      case "init" -> {
-        new InitCommand().execute(args);
-      }
-      case "cat-file" -> {
-        new CatFileCommand().execute(args);
-      }
-      case "hash-object" -> {
-        new HashObjectCommand().execute(args);
-      }
-      case "ls-tree" -> {
-        new LsTreeCommand().execute(args);
-      }
+      case "init" -> new InitCommand().execute(args);
+      case "cat-file" -> new CatFileCommand().execute(args);
+      case "hash-object" -> new WriteObjectCommand().execute(args);
+      case "ls-tree" -> new ReadTreeCommand().execute(args);
+      case "write-tree" -> new WriteTreeCommand().execute(args);
       default -> System.out.println("Unknown command: " + command);
     }
   }

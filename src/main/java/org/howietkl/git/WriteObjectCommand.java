@@ -13,18 +13,18 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.zip.DeflaterOutputStream;
 
-public class HashObjectCommand implements Command {
-  private static final Logger LOG = LoggerFactory.getLogger(HashObjectCommand.class);
+public class WriteObjectCommand implements Command {
+  private static final Logger LOG = LoggerFactory.getLogger(WriteObjectCommand.class);
 
   @Override
   public void execute(String[] args) {
     if (args.length < 3 && !"-w".equals(args[1])) {
       return;
     }
-    hashObject(args[2]);
+    System.out.println(Utils.bytesToHex(writeObject(args[2])));
   }
 
-  private void hashObject(String filePath) {
+  byte[] writeObject(String filePath) {
     try {
       LOG.info("hash-object path={}", filePath);
       byte[] data = Files.readAllBytes(Path.of(filePath));
@@ -35,7 +35,6 @@ public class HashObjectCommand implements Command {
       msg.update(data);
       byte[] digest = msg.digest();
       String blobSha = Utils.bytesToHex(digest);
-      System.out.println(blobSha);
 
       File parentDir = new File(String.format(".git/objects/%s", blobSha.substring(0, 2)));
       parentDir.mkdirs();
@@ -44,6 +43,7 @@ public class HashObjectCommand implements Command {
         out.write(preamble.getBytes(StandardCharsets.UTF_8));
         out.write(data);
       }
+      return digest;
     } catch (IOException | NoSuchAlgorithmException e) {
       LOG.error(e.getMessage(), e);
       throw new RuntimeException(e);
