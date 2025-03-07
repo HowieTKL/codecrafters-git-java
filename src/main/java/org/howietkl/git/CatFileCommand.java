@@ -21,7 +21,7 @@ public class CatFileCommand implements Command {
   }
 
   private void catFile(String blobSha) {
-    String filePath = String.format(".git/objects/%s/%s", blobSha.substring(0, 2), blobSha.substring(2));
+    String filePath = Utils.getPath(blobSha);
     LOG.info("cat-file hash={} path={}", blobSha, filePath);
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(new InflaterInputStream(new FileInputStream(filePath))))) {
       String line = reader.readLine();

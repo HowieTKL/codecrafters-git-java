@@ -1,6 +1,7 @@
 import org.howietkl.git.CatFileCommand;
 import org.howietkl.git.HashObjectCommand;
 import org.howietkl.git.InitCommand;
+import org.howietkl.git.LsTreeCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +20,9 @@ public class Main {
       }
       case "hash-object" -> {
         new HashObjectCommand().execute(args);
+      }
+      case "ls-tree" -> {
+        new LsTreeCommand().execute(args);
       }
       default -> System.out.println("Unknown command: " + command);
     }
