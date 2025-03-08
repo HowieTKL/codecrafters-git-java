@@ -1,4 +1,5 @@
 import org.howietkl.git.CatFileCommand;
+import org.howietkl.git.CloneCommand;
 import org.howietkl.git.CommitTreeCommand;
 import org.howietkl.git.WriteObjectCommand;
 import org.howietkl.git.InitCommand;
@@ -20,6 +21,7 @@ public class Main {
       case "ls-tree" -> new ReadTreeCommand().execute(args);
       case "write-tree" -> new WriteTreeCommand().execute(args);
       case "commit-tree" -> new CommitTreeCommand().execute(args);
+      case "clone" -> new CloneCommand().execute(args);
       default -> System.out.println("Unknown command: " + command);
     }
   }
