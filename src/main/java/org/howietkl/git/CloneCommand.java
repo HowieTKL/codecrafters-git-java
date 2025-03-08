@@ -11,6 +11,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
@@ -46,7 +47,8 @@ public class CloneCommand implements Command {
       dirFile.mkdirs();
 
       Set<String> hashes = fetchRootHashes(httpPath);
-      fetchPack(httpPath, hashes);
+      byte[] pack = fetchPack(httpPath, hashes);
+      LOG.debug("gitClone pack={}", Utils.bytesToHex(pack));
 
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
@@ -99,13 +101,13 @@ public class CloneCommand implements Command {
   byte[] fetchPack(String url, Set<String> hashes) throws IOException, InterruptedException {
     URI uri = URI.create(url + "/git-upload-pack");
     LOG.debug("fetchPack uri={} hashes={}", uri, hashes.toString());
-
     // construct post body command
     StringBuilder postBody = new StringBuilder();
     postBody.append("0011command=fetch")
         .append("0014agent=git/2.00.0")
         .append("0016object-format=sha1")
         .append("0001000dthin-pack");
+    // https://git-scm.com/docs/gitprotocol-http#_the_negotiation_algorithm
     hashes.stream().forEach(h -> postBody.append("0032want ").append(h).append("\n"));
     postBody.append("0009done\n").append("0000");
     LOG.debug("fetchPack postBody={}", postBody);
@@ -122,8 +124,26 @@ public class CloneCommand implements Command {
           .POST(HttpRequest.BodyPublishers.ofString(postBody.toString()))
           .build();
       HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-      LOG.debug("fetchPack - {} bytes returned", response.body().length);
-      return response.body();
+      LOG.debug("fetchPack - {} bytes returned response={}", response.body().length, Utils.bytesToHex(response.body()));
+
+      // extract pack...
+      ByteBuffer raw = ByteBuffer.wrap(response.body());
+      // strip out "Compressing objects.." metadata
+      while (raw.get() != 1) {
+        // traverse bytes until we read 0x01
+      }
+      raw.mark();
+      byte[] packHeader = new byte[4];
+      raw.get(packHeader);
+      // validate that we see a "PACK" header
+      if ("PACK".equals(new String(packHeader, StandardCharsets.UTF_8))) {
+        raw.reset();
+        raw.compact();
+        return raw.array();
+      } else {
+        LOG.error("Unexpected Pack file format");
+      }
+      throw new IllegalStateException("Pack could not be fetched");
     }
   }
 
