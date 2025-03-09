@@ -32,13 +32,12 @@ public class Utils {
     try {
       return MessageDigest.getInstance("SHA-1").digest(data);
     } catch (NoSuchAlgorithmException e) {
-      LOG.error("SHA-1 algorithm not found", e);
       throw new RuntimeException(e);
     }
   }
 
-  public static byte[] getInflated(ByteBuffer buf, int size) throws DataFormatException {
-    byte[] data = new byte[size];
+  public static byte[] getInflated(ByteBuffer buf, int inflatedSize) throws DataFormatException {
+    byte[] data = new byte[inflatedSize];
     Inflater inflater = new Inflater();
     inflater.setInput(buf);
     inflater.inflate(data);
