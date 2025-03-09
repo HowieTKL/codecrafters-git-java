@@ -91,11 +91,10 @@ public class ReadTreeCommand implements Command {
         } else { // b == 0
           String segment = buf.toString(StandardCharsets.UTF_8);
           buf.reset();
-          String[] segmentSplit = segment.split(" ");
-          assert segmentSplit.length == 2 && segmentSplit[0].length() == 6;
+          int indexOfFirstSpace = segment.indexOf(' ');
           TreeObjectEntry entry = new TreeObjectEntry();
-          entry.mode = segmentSplit[0];
-          entry.name = segmentSplit[1];
+          entry.mode = segment.substring(0, indexOfFirstSpace);
+          entry.name = segment.substring(indexOfFirstSpace + 1);
           entry.sha = new byte[20];
           int shaBytesRead = in.read(entry.sha);
           assert shaBytesRead == 20;
