@@ -60,7 +60,7 @@ public class Utils {
     dir.mkdirs();
 
     File file = new File(dir, sha1.substring(2));
-    LOG.debug("writeObjectFile file={}", file.getAbsolutePath());
+    LOG.trace("writeObjectFile file={}", file.getAbsolutePath());
     try (DeflaterOutputStream out = new DeflaterOutputStream(new FileOutputStream(file, false))) {
       out.write(data);
     }

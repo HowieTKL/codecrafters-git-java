@@ -107,15 +107,22 @@ public class GitPack {
         DeltifiedGitObject deltifiedGitObject = new DeltifiedGitObject(info);
         gitObject = deltifiedGitObject;
         processDeltified(buf, deltifiedGitObject);
+        // TODO
       }
       case OFS_DELTA -> {
         DeltifiedGitObject deltifiedGitObject = new DeltifiedGitObject(info);
         gitObject = deltifiedGitObject;
+
+        // hash is at an offset
         int offset = getVarInt(buf);
         int currentPosition = buf.position();
         int offsetPosition = currentPosition - offset;
         buf.position(offsetPosition);
         processDeltified(buf, deltifiedGitObject);
+
+        // continue where we left off
+        buf.position(currentPosition);
+        // TODO
       }
       default -> throw new UnsupportedOperationException("Unsupported object type=" + info.getType());
     }
@@ -131,10 +138,10 @@ public class GitPack {
     deltifiedGitObject.setData(Utils.getInflated(buf, deltifiedGitObject.getInfo().getSize()));
   }
 
-  private void processUndeltified(ByteBuffer buf, GitObject po) throws DataFormatException {
-    byte[] inflatedData = Utils.getInflated(buf, po.getInfo().getSize());
-    po.setData(inflatedData);
-    if (po.getInfo().getType() == GitObjectType.BLOB) {
+  private void processUndeltified(ByteBuffer buf, GitObject go) throws DataFormatException {
+    byte[] inflatedData = Utils.getInflated(buf, go.getInfo().getSize());
+    go.setData(inflatedData);
+    if (go.getInfo().getType() == GitObjectType.BLOB) {
       LOG.trace("processUndeltified BLOB data={}", new String(inflatedData, StandardCharsets.UTF_8));
     }
   }
