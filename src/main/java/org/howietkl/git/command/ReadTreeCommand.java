@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,10 +17,22 @@ import java.util.zip.InflaterInputStream;
 public class ReadTreeCommand implements Command {
   private static final Logger LOG = LoggerFactory.getLogger(ReadTreeCommand.class);
 
-  static class TreeObjectEntry {
-    String mode;
-    String name;
-    byte[] sha;
+  public static class TreeObjectEntry {
+    private String mode;
+    private String name;
+    private byte[] sha;
+
+    public String getMode() {
+      return mode;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public byte[] getSha() {
+      return sha;
+    }
   }
 
   @Override
@@ -32,24 +45,30 @@ public class ReadTreeCommand implements Command {
       throw new IllegalArgumentException("Missing tree-sha");
     }
     String treeSha = isNameOnly ? args[2] : args[1];
-    readTree(isNameOnly, treeSha);
+    readTree(false, isNameOnly, treeSha, null);
   }
 
   /**
+   * @param isQuiet    don't print anything
    * @param isNameOnly display only names
-   * @param treeSha SHA-1 of the tree (directory)
+   * @param treeSha    SHA-1 of the tree (directory)
+   * @param dir
    */
-  private void readTree(boolean isNameOnly, String treeSha) {
-    LOG.info("lsTree isNameOnly={} treeSha={}", isNameOnly, treeSha);
+  public List<TreeObjectEntry> readTree(boolean isQuiet, boolean isNameOnly, String treeSha, File dir) {
+    LOG.info("readTree isNameOnly={} treeSha={}", isNameOnly, treeSha);
+    if (dir == null) {
+      dir = new File(".");
+    }
     String filePath = Utils.getPath(treeSha);
-    LOG.debug("lsTree file={}", filePath);
+    File file = new File(dir, filePath);
+    LOG.debug("readTree file={}", filePath);
 
     /* File contents:
      * tree <size>\0
      * <mode> <name>\0<20_byte_sha>
      * <mode> <name>\0<20_byte_sha>
      */
-    try (FileInputStream fis = new FileInputStream(filePath);
+    try (FileInputStream fis = new FileInputStream(file);
         InputStream in = new InflaterInputStream(fis)) {
 
       // read preamble
@@ -61,7 +80,7 @@ public class ReadTreeCommand implements Command {
       String first = buf.toString(StandardCharsets.UTF_8);
       String[] firstSplit = first.split(" ");
       assert firstSplit.length == 2 && firstSplit[0].equals("tree");
-      LOG.debug("ls-tree preamble: {} {}", firstSplit[0], firstSplit[1]);
+      LOG.debug("readTree preamble: {} {}", firstSplit[0], firstSplit[1]);
       buf.reset();
 
       // read subsequent entries, constructing TreeObjectEntry for each
@@ -85,18 +104,20 @@ public class ReadTreeCommand implements Command {
         }
       }
 
-      // print out entries
-      if (isNameOnly) {
-        entries.forEach(entry -> System.out.println(entry.name));
-      } else {
-        entries.forEach(entry -> {
-          System.out.print(entry.mode);
-          System.out.print(" ");
-          System.out.print(entry.name);
-          System.out.print(" ");
-          System.out.println(Utils.bytesToHex(entry.sha));
-        });
+      if (!isQuiet) {
+        if (isNameOnly) {
+          entries.forEach(entry -> System.out.println(entry.name));
+        } else {
+          entries.forEach(entry -> {
+            System.out.print(entry.mode);
+            System.out.print(" ");
+            System.out.print(entry.name);
+            System.out.print(" ");
+            System.out.println(Utils.bytesToHex(entry.sha));
+          });
+        }
       }
+      return entries;
     } catch (IOException e) {
       LOG.error(e.getMessage(), e);
       throw new RuntimeException(e);

@@ -1,6 +1,6 @@
 package org.howietkl.git;
 
-public enum ObjectType {
+public enum GitObjectType {
   INVALID(null),    // 0
   COMMIT("commit"), // 1
   TREE("tree"),     // 2
@@ -9,10 +9,10 @@ public enum ObjectType {
   RESERVED(null),   // 5
   OFS_DELTA(null),  // 6
   REF_DELTA("ref"); // 7
-  public static final ObjectType[] values = values();
-  private String heading;
+  public static final GitObjectType[] values = values();
+  private final String heading;
 
-  ObjectType(String heading) {
+  GitObjectType(String heading) {
     this.heading = heading;
   }
 
@@ -20,11 +20,11 @@ public enum ObjectType {
     return heading != null ? heading : name();
   }
 
-  public static ObjectType parse(String label) {
+  public static GitObjectType parse(String label) {
     if ("ref".equals(label)) {
       return REF_DELTA;
     }
     label = label.trim().toUpperCase();
-    return valueOf(ObjectType.class, label);
+    return valueOf(GitObjectType.class, label);
   }
 }

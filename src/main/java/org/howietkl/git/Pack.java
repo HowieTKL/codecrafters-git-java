@@ -32,20 +32,19 @@ public class Pack {
    * The MSB of 1 indicates whether us to continue using the next byte
    * to calculate the size, and concatenated in little-endian fashion.
    *
-   * @param first byte extracted for type
    * @param buf remaining pack buffer
    * @return size from varint
    */
-  static ObjectInfo getObjectInfo(ByteBuffer buf) {
-    ObjectInfo info = new ObjectInfo();
+  static GitObjectInfo getObjectInfo(ByteBuffer buf) {
+    GitObjectInfo info = new GitObjectInfo();
     byte b = buf.get();
     info.setType(getType(b));
     info.setSize(getVarInt(b, buf));
     return info;
   }
 
-  static ObjectType getType(byte b) {
-    return ObjectType.values[(b & OBJECT_TYPE_MASK) >> 4];
+  static GitObjectType getType(byte b) {
+    return GitObjectType.values[(b & OBJECT_TYPE_MASK) >> 4];
   }
 
   static int getVarInt(byte first, ByteBuffer buf) {
@@ -95,7 +94,7 @@ public class Pack {
   }
 
   private void processObject(ByteBuffer buf, int i) throws DataFormatException, IOException {
-    ObjectInfo info = getObjectInfo(buf);
+    GitObjectInfo info = getObjectInfo(buf);
     LOG.debug("processObjects objectIndex={} type={} size={}", i, info.getType(), info.getSize());
     GitObject gitObject;
     switch (info.getType()) {
@@ -105,39 +104,37 @@ public class Pack {
         createObjectFile(gitObject);
       }
       case REF_DELTA -> {
-        DeltifiedObject deltifiedObject = new DeltifiedObject(info);
-        gitObject = deltifiedObject;
-        processDeltified(buf, deltifiedObject);
+        DeltifiedGitObject deltifiedGitObject = new DeltifiedGitObject(info);
+        gitObject = deltifiedGitObject;
+        processDeltified(buf, deltifiedGitObject);
       }
       case OFS_DELTA -> {
-        DeltifiedObject deltifiedObject = new DeltifiedObject(info);
-        gitObject = deltifiedObject;
+        DeltifiedGitObject deltifiedGitObject = new DeltifiedGitObject(info);
+        gitObject = deltifiedGitObject;
         int offset = getVarInt(buf);
         int currentPosition = buf.position();
         int offsetPosition = currentPosition - offset;
         buf.position(offsetPosition);
-        processDeltified(buf, deltifiedObject);
+        processDeltified(buf, deltifiedGitObject);
       }
-      default -> {
-        throw new UnsupportedOperationException("Unsupported pack object type=" + info.getType());
-      }
+      default -> throw new UnsupportedOperationException("Unsupported object type=" + info.getType());
     }
     objects.add(gitObject);
   }
 
-  private void processDeltified(ByteBuffer buf, DeltifiedObject deltifiedObject) throws DataFormatException {
+  private void processDeltified(ByteBuffer buf, DeltifiedGitObject deltifiedGitObject) throws DataFormatException {
     byte[] sha1 = new byte[20];
     buf.get(sha1);
     String sha1String = Utils.bytesToHex(sha1);
-    deltifiedObject.setSha(sha1);
-    LOG.debug("processObject type={} sha1={}", deltifiedObject.getInfo().getType(), sha1String);
-    deltifiedObject.setData(Utils.getInflated(buf, deltifiedObject.getInfo().getSize()));
+    deltifiedGitObject.setSha(sha1);
+    LOG.debug("processObject type={} sha1={}", deltifiedGitObject.getInfo().getType(), sha1String);
+    deltifiedGitObject.setData(Utils.getInflated(buf, deltifiedGitObject.getInfo().getSize()));
   }
 
   private void processUndeltified(ByteBuffer buf, GitObject po) throws DataFormatException {
     byte[] inflatedData = Utils.getInflated(buf, po.getInfo().getSize());
     po.setData(inflatedData);
-    if (po.getInfo().getType() == ObjectType.BLOB) {
+    if (po.getInfo().getType() == GitObjectType.BLOB) {
       LOG.trace("processUndeltified BLOB data={}", new String(inflatedData, StandardCharsets.UTF_8));
     }
   }

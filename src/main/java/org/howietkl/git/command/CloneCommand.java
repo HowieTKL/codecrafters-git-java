@@ -32,8 +32,12 @@ public class CloneCommand implements Command {
 
       // discoverRefs(httpPath); // assume git v2 support
       Set<String> refs = GitHttpClient.fetchRefs(httpPath);
-      byte[] pack = GitHttpClient.fetchPack(httpPath, refs);
-      Pack.process(pack, dirFile);
+      byte[] packBytes = GitHttpClient.fetchPack(httpPath, refs);
+      try {
+        Pack.process(packBytes, dirFile);
+      } catch (Exception e) {
+        LOG.error(e.getMessage(), e);
+      }
       Repository.populate(dirFile, refs.stream().findFirst().get());
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);

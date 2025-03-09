@@ -24,7 +24,7 @@ public class WriteObjectCommand implements Command {
 
   byte[] writeObject(String filePath) {
     try {
-      LOG.info("hash-object path={}", filePath);
+      LOG.info("writeObject path={}", filePath);
       byte[] data = Files.readAllBytes(Path.of(filePath));
 
       ByteArrayOutputStream buf = new ByteArrayOutputStream(data.length + 16);

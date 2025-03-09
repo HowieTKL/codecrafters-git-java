@@ -19,12 +19,12 @@ class PackTest {
 
   @Test
   void getType() {
-    assertEquals(ObjectType.COMMIT, Pack.getType((byte) 0b00010000));
-    assertEquals(ObjectType.TREE, Pack.getType((byte) 0b00100000));
-    assertEquals(ObjectType.BLOB, Pack.getType((byte) 0b00110000));
-    assertEquals(ObjectType.TAG, Pack.getType((byte) 0b01000000));
-    assertEquals(ObjectType.OFS_DELTA, Pack.getType((byte) 0b01100000));
-    assertEquals(ObjectType.REF_DELTA, Pack.getType((byte) 0b01110000));
+    assertEquals(GitObjectType.COMMIT, Pack.getType((byte) 0b00010000));
+    assertEquals(GitObjectType.TREE, Pack.getType((byte) 0b00100000));
+    assertEquals(GitObjectType.BLOB, Pack.getType((byte) 0b00110000));
+    assertEquals(GitObjectType.TAG, Pack.getType((byte) 0b01000000));
+    assertEquals(GitObjectType.OFS_DELTA, Pack.getType((byte) 0b01100000));
+    assertEquals(GitObjectType.REF_DELTA, Pack.getType((byte) 0b01110000));
   }
 
   @Test

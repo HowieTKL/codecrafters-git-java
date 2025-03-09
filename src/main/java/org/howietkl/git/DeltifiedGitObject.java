@@ -1,9 +1,9 @@
 package org.howietkl.git;
 
-public class DeltifiedObject extends GitObject {
+public class DeltifiedGitObject extends GitObject {
   private byte[] sha;
 
-  DeltifiedObject(ObjectInfo info) {
+  DeltifiedGitObject(GitObjectInfo info) {
     super(info);
   }
 
@@ -14,4 +14,5 @@ public class DeltifiedObject extends GitObject {
   public void setSha(byte[] sha) {
     this.sha = sha;
   }
+
 }

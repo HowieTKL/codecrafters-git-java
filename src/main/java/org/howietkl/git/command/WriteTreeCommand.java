@@ -21,13 +21,13 @@ public class WriteTreeCommand implements Command {
 
   private void writeTree() {
     File currentDir = new File(".");
-    LOG.info("write-tree root={}", currentDir.getAbsolutePath());
+    LOG.info("writeTree root={}", currentDir.getAbsolutePath());
     System.out.println(Utils.bytesToHex(writeTree(currentDir)));
   }
 
   private byte[] writeTree(File current) {
     try {
-      LOG.debug("write-tree file={}", current.getPath());
+      LOG.debug("writeTree file={}", current.getPath());
       File[] files = current.listFiles(f -> !(f.isDirectory() && f.getName().equals(".git")));
       Arrays.sort(files);
 

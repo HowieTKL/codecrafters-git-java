@@ -1,14 +1,14 @@
 package org.howietkl.git;
 
-public class ObjectInfo {
-  private ObjectType type;
+public class GitObjectInfo {
+  private GitObjectType type;
   private int size;
 
-  public ObjectType getType() {
+  public GitObjectType getType() {
     return type;
   }
 
-  public void setType(ObjectType type) {
+  public void setType(GitObjectType type) {
     this.type = type;
   }
 

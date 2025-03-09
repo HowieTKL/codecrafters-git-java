@@ -1,18 +1,18 @@
 package org.howietkl.git;
 
 public class GitObject {
-  private ObjectInfo info;
+  private GitObjectInfo info;
   private byte[] data;
 
-  GitObject(ObjectInfo info) {
+  GitObject(GitObjectInfo info) {
     this.info = info;
   }
 
-  public ObjectInfo getInfo() {
+  public GitObjectInfo getInfo() {
     return info;
   }
 
-  public void setInfo(ObjectInfo info) {
+  public void setInfo(GitObjectInfo info) {
     this.info = info;
   }
 
