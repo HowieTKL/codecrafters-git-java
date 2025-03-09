@@ -59,12 +59,16 @@ public class GitHttpClient {
     return Collections.EMPTY_SET;
   }
 
+  // https://git-scm.com/docs/gitprotocol-http#_the_negotiation_algorithm
+  // https://git-scm.com/docs/protocol-common#_pkt_line_format
   public static Set<String> fetchRefs(String url) throws IOException, InterruptedException {
     URI uri = URI.create(url + "/git-upload-pack");
     LOG.debug("fetchRefs uri={}", uri);
     StringBuilder postBody = new StringBuilder();
-    postBody.append("0014command=ls-refs\n")
+    postBody
+        .append("0014command=ls-refs\n")
         .append("0001")
+        .append("0014ref-prefix HEAD\n")
         .append("001bref-prefix refs/heads/\n")
         .append("0000");
     try (HttpClient client = HttpClient.newBuilder()
@@ -109,11 +113,9 @@ public class GitHttpClient {
     URI uri = URI.create(url + "/git-upload-pack");
     // construct post body command
     StringBuilder postBody = new StringBuilder();
-    postBody.append("0011command=fetch")
-        .append("0014agent=git/2.00.0")
-        .append("0016object-format=sha1")
-        .append("0001000dthin-pack");
-    // https://git-scm.com/docs/gitprotocol-http#_the_negotiation_algorithm
+    postBody
+        .append("0012command=fetch\n")
+        .append("0001");
     hashes.stream().forEach(h -> postBody.append("0032want ").append(h).append("\n"));
     postBody.append("0009done\n").append("0000");
     LOG.debug("fetchPack uri={} postBody={}", uri, postBody);
