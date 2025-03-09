@@ -19,6 +19,8 @@ import java.util.Set;
 public class CloneCommand implements Command {
   private static final Logger LOG = LoggerFactory.getLogger(CloneCommand.class);
 
+
+
   @Override
   public void execute(String[] args) {
     if (args.length < 3) {
@@ -48,7 +50,7 @@ public class CloneCommand implements Command {
 
       Set<String> hashes = fetchRootHashes(httpPath);
       byte[] pack = fetchPack(httpPath, hashes);
-      LOG.debug("gitClone pack={}", Utils.bytesToHex(pack));
+      Pack p = Pack.process(pack);
 
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
@@ -124,7 +126,7 @@ public class CloneCommand implements Command {
           .POST(HttpRequest.BodyPublishers.ofString(postBody.toString()))
           .build();
       HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-      LOG.debug("fetchPack - {} bytes returned response={}", response.body().length, Utils.bytesToHex(response.body()));
+      LOG.debug("fetchPack retrieved {} bytes", response.body().length);
 
       // extract pack...
       ByteBuffer raw = ByteBuffer.wrap(response.body());
@@ -141,7 +143,7 @@ public class CloneCommand implements Command {
         raw.compact();
         return raw.array();
       } else {
-        LOG.error("Unexpected Pack file format");
+        LOG.error("Pack file missing PACK header");
       }
       throw new IllegalStateException("Pack could not be fetched");
     }
