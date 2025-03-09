@@ -13,8 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.DataFormatException;
 
-public class Pack {
-  private static final Logger LOG = LoggerFactory.getLogger(Pack.class);
+public class GitPack {
+  private static final Logger LOG = LoggerFactory.getLogger(GitPack.class);
 
   static final int VARINT_CONTINUE_MASK = 0b10000000;
   static final int VARINT_7BIT_MASK = 0b01111111;
@@ -64,9 +64,9 @@ public class Pack {
     return objectSize;
   }
 
-  public static Pack process(byte[] pack, File dir) throws DataFormatException, IOException {
+  public static GitPack process(byte[] pack, File dir) throws DataFormatException, IOException {
     ByteBuffer buf = ByteBuffer.wrap(pack);
-    Pack p = new Pack();
+    GitPack p = new GitPack();
     p.dir = dir;
 
     p.processHeader(buf);

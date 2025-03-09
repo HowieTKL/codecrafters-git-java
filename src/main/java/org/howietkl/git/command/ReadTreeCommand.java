@@ -55,7 +55,7 @@ public class ReadTreeCommand implements Command {
    * @param dir
    */
   public List<TreeObjectEntry> readTree(boolean isQuiet, boolean isNameOnly, String treeSha, File dir) {
-    LOG.info("readTree isNameOnly={} treeSha={}", isNameOnly, treeSha);
+    LOG.debug("readTree isNameOnly={} treeSha={}", isNameOnly, treeSha);
     if (dir == null) {
       dir = new File(".");
     }

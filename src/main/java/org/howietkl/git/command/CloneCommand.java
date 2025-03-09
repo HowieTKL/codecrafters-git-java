@@ -1,8 +1,8 @@
 package org.howietkl.git.command;
 
+import org.howietkl.git.GitObjectRepository;
 import org.howietkl.git.utils.GitHttpClient;
-import org.howietkl.git.Pack;
-import org.howietkl.git.Repository;
+import org.howietkl.git.GitPack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,11 +34,11 @@ public class CloneCommand implements Command {
       Set<String> refs = GitHttpClient.fetchRefs(httpPath);
       byte[] packBytes = GitHttpClient.fetchPack(httpPath, refs);
       try {
-        Pack.process(packBytes, dirFile);
+        GitPack.process(packBytes, dirFile);
       } catch (Exception e) {
         LOG.error(e.getMessage(), e);
       }
-      Repository.populate(dirFile, refs.stream().findFirst().get());
+      GitObjectRepository.populateFromCommit(dirFile, refs.stream().findFirst().get());
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
       // throw new RuntimeException(e);
