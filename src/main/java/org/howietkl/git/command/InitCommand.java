@@ -1,4 +1,4 @@
-package org.howietkl.git;
+package org.howietkl.git.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,12 +12,12 @@ public class InitCommand implements Command {
 
   @Override
   public void execute(String[] args) {
-    init();
+    init(new File("."));
   }
 
-  private void init() {
+  void init(File dir) {
     LOG.info("init");
-    final File root = new File(".git");
+    final File root = new File(dir,".git");
     new File(root, "objects").mkdirs();
     new File(root, "refs").mkdirs();
     final File head = new File(root, "HEAD");

@@ -1,10 +1,10 @@
-package org.howietkl.git;
+package org.howietkl.git.utils;
 
+import org.howietkl.git.command.CloneCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
@@ -13,58 +13,58 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CloneCommand implements Command {
+/* Tips from codecrafter comments to reverse engineer what's happening in a "git clone":
+ * OPTION 1 (recommended)
+ * - Install https://mitmproxy.org/
+ * - git -c http.sslVerify=false -c http.proxy=localhost:8080 clone https://github.com/[repo]
+ *
+ * OPTION 2
+ * - GIT_TRACE_CURL=1 git clone https://github.com/HowieTKL/hello hello
+ *
+ * References:
+ * https://git-scm.com/docs/protocol-v2
+ */
+public class GitHttpClient {
   private static final Logger LOG = LoggerFactory.getLogger(CloneCommand.class);
 
+  /**
+   * Technically required by protocol to discover server service=git-upload-pack
+   * capabilities, but we can assume git protocol v2 support.
+   */
+  public static Set<String> discoverRefs(String url) throws IOException, InterruptedException {
+    URI uri = URI.create(url + "/info/refs?service=git-upload-pack");
+    LOG.debug("Discover refs from uri={}", uri);
 
-
-  @Override
-  public void execute(String[] args) {
-    if (args.length < 3) {
-      return;
+    try (HttpClient client = HttpClient.newBuilder()
+        .build()) {
+      HttpRequest request = HttpRequest
+          .newBuilder()
+          .uri(uri)
+          .version(HttpClient.Version.HTTP_2)
+          .header("Content-Type", "application/x-git-upload-pack-request")
+          .header("Cache-Control", "no-cache")
+          .header("git-protocol", "version=2")
+          .GET()
+          .build();
+      HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+      if (response.statusCode() != 200) {
+        throw new RuntimeException("Failed to discover refs statusCode=" + response.statusCode());
+      }
+      LOG.debug("discoverRefs httpResponse={}", response.body());
     }
-
-    gitClone(args[1], args[2]);
+    return Collections.EMPTY_SET;
   }
 
-  private void gitClone(String httpPath, String dir) {
-    /* Tips from codecrafter comments to reverse engineer what's happening in a "git clone":
-     * OPTION 1 (recommended)
-     * - Install https://mitmproxy.org/
-     * - git -c http.sslVerify=false -c http.proxy=localhost:8080 clone https://github.com/[repo]
-     *
-     * OPTION 2
-     * - GIT_TRACE_CURL=1 git clone https://github.com/HowieTKL/hello hello
-     *
-     * References:
-     * https://git-scm.com/docs/protocol-v2
-     */
-    LOG.info("Clone {} {}", httpPath, dir);
-
-    try {
-      File dirFile = new File(dir);
-      dirFile.mkdirs();
-
-      Set<String> hashes = fetchRootHashes(httpPath);
-      byte[] pack = fetchPack(httpPath, hashes);
-      Pack p = Pack.process(pack);
-
-    } catch (Exception e) {
-      LOG.error(e.getMessage(), e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Set<String> fetchRootHashes(String url) throws IOException, InterruptedException {
+  public static Set<String> fetchRefs(String url) throws IOException, InterruptedException {
     URI uri = URI.create(url + "/git-upload-pack");
-    LOG.debug("fetchRootHashes uri={}", uri.toString());
+    LOG.debug("fetchRefs uri={}", uri);
     StringBuilder postBody = new StringBuilder();
     postBody.append("0014command=ls-refs\n")
-        .append("0014agent=git/2.00.0")
-        .append("00010009peel\n")
+        .append("0001")
         .append("001bref-prefix refs/heads/\n")
         .append("0000");
     try (HttpClient client = HttpClient.newBuilder()
@@ -76,33 +76,37 @@ public class CloneCommand implements Command {
           .header("Content-Type", "application/x-git-upload-pack-request")
           .header("Cache-Control", "no-cache")
           .header("git-protocol", "version=2")
+          .header("Accept", "application/x-git-upload-pack-result")
           .POST(HttpRequest.BodyPublishers.ofString(postBody.toString()))
           .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+          throw new RuntimeException("Failed to fetch hashes statusCode=" + response.statusCode());
+        }
         /** Sample response:
          * 00500ed33a2a0b12f05eb1aba57c5ed4a5eac9c0162d HEAD symref-target:refs/heads/main
          * 003d0ed33a2a0b12f05eb1aba57c5ed4a5eac9c0162d refs/heads/main
          * 0000
          */
-        LOG.debug("fetchRootHashes httpResponse={}", response.body());
+        LOG.debug("fetchRefs httpResponse={}", response.body());
         // extracting hashes...
-        Set<String> hashes = new HashSet<>();
+        Set<String> refs = new HashSet<>();
         BufferedReader reader = new BufferedReader(new StringReader(response.body()));
         String line;
         while ((line = reader.readLine()) != null) {
           String[] augmentedHashName = line.split(" ");
           if (augmentedHashName.length == 2) {
-            hashes.add(augmentedHashName[0].substring(4));
+            String ref = augmentedHashName[0].substring(4);
+            assert ref.length() == 40: "Ref not SHA-1 (40 characters): " + ref;
+            refs.add(ref);
           }
         }
-        LOG.debug(hashes.toString());
-        return hashes;
+        return refs;
     }
   }
 
-  byte[] fetchPack(String url, Set<String> hashes) throws IOException, InterruptedException {
+  public static byte[] fetchPack(String url, Set<String> hashes) throws IOException, InterruptedException {
     URI uri = URI.create(url + "/git-upload-pack");
-    LOG.debug("fetchPack uri={} hashes={}", uri, hashes.toString());
     // construct post body command
     StringBuilder postBody = new StringBuilder();
     postBody.append("0011command=fetch")
@@ -112,7 +116,7 @@ public class CloneCommand implements Command {
     // https://git-scm.com/docs/gitprotocol-http#_the_negotiation_algorithm
     hashes.stream().forEach(h -> postBody.append("0032want ").append(h).append("\n"));
     postBody.append("0009done\n").append("0000");
-    LOG.debug("fetchPack postBody={}", postBody);
+    LOG.debug("fetchPack uri={} postBody={}", uri, postBody);
 
     try (HttpClient client = HttpClient.newBuilder()
         .build()) {
@@ -126,6 +130,9 @@ public class CloneCommand implements Command {
           .POST(HttpRequest.BodyPublishers.ofString(postBody.toString()))
           .build();
       HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+      if (response.statusCode() != 200) {
+        throw new RuntimeException("Failed to fetch Pack statusCode=" + response.statusCode());
+      }
       LOG.debug("fetchPack retrieved {} bytes", response.body().length);
 
       // extract pack...

@@ -1,5 +1,6 @@
-package org.howietkl.git;
+package org.howietkl.git.command;
 
+import org.howietkl.git.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,10 +1,10 @@
-import org.howietkl.git.CatFileCommand;
-import org.howietkl.git.CloneCommand;
-import org.howietkl.git.CommitTreeCommand;
-import org.howietkl.git.WriteObjectCommand;
-import org.howietkl.git.InitCommand;
-import org.howietkl.git.ReadTreeCommand;
-import org.howietkl.git.WriteTreeCommand;
+import org.howietkl.git.command.CatFileCommand;
+import org.howietkl.git.command.CloneCommand;
+import org.howietkl.git.command.CommitTreeCommand;
+import org.howietkl.git.command.WriteObjectCommand;
+import org.howietkl.git.command.InitCommand;
+import org.howietkl.git.command.ReadTreeCommand;
+import org.howietkl.git.command.WriteTreeCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
