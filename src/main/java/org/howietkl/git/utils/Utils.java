@@ -49,7 +49,6 @@ public class Utils {
   /**
    * data consists of: [type] [data length]\0[contents]
    * @param data entire preamble + data to be written
-   * @return sha-1
    * @throws IOException if error occurs during writing
    */
   public static byte[] writeObjectFile(byte[] data, File repoDir) throws IOException {
