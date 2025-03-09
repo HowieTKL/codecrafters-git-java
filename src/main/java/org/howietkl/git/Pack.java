@@ -101,11 +101,7 @@ public class Pack {
     switch (info.getType()) {
       case COMMIT, TREE, BLOB, TAG -> {
         gitObject = new GitObject(info);
-        byte[] data = processUndeltified(buf, gitObject);
-        if (info.getType() == ObjectType.BLOB) {
-          LOG.trace("processObjects objectIndex={} data={}", i, new String(data, StandardCharsets.UTF_8));
-        }
-        gitObject.setData(data);
+        processUndeltified(buf, gitObject);
         createObjectFile(gitObject);
       }
       case REF_DELTA -> {
@@ -126,7 +122,6 @@ public class Pack {
         throw new UnsupportedOperationException("Unsupported pack object type=" + info.getType());
       }
     }
-
     objects.add(gitObject);
   }
 
@@ -134,13 +129,17 @@ public class Pack {
     byte[] sha1 = new byte[20];
     buf.get(sha1);
     String sha1String = Utils.bytesToHex(sha1);
-    deltifiedObject.sha = sha1;
+    deltifiedObject.setSha(sha1);
     LOG.debug("processObject type={} sha1={}", deltifiedObject.getInfo().getType(), sha1String);
     deltifiedObject.setData(Utils.getInflated(buf, deltifiedObject.getInfo().getSize()));
   }
 
-  private byte[] processUndeltified(ByteBuffer buf, GitObject po) throws DataFormatException {
-    return Utils.getInflated(buf, po.getInfo().getSize());
+  private void processUndeltified(ByteBuffer buf, GitObject po) throws DataFormatException {
+    byte[] inflatedData = Utils.getInflated(buf, po.getInfo().getSize());
+    po.setData(inflatedData);
+    if (po.getInfo().getType() == ObjectType.BLOB) {
+      LOG.trace("processUndeltified BLOB data={}", new String(inflatedData, StandardCharsets.UTF_8));
+    }
   }
 
   void createObjectFile(GitObject gitObject) throws IOException {
